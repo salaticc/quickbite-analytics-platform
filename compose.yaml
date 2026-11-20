@@ -37,7 +37,8 @@ services:
       - "127.0.0.1:${CLICKHOUSE_NATIVE_PORT:-59000}:9000"
     volumes:
       - clickhouse_data:/var/lib/clickhouse
-      - ./infra/clickhouse:/docker-entrypoint-initdb.d:ro
+      - ./infra/clickhouse:/quickbite-init:ro
+      - ./infra/clickhouse/010_bootstrap.sh:/docker-entrypoint-initdb.d/010_bootstrap.sh:ro
       - ./tests/clickhouse.sql:/quickbite-tests/smoke.sql:ro
     ulimits:
       nofile:
