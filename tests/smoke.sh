@@ -30,7 +30,7 @@ smoke() {
 smoke
 if "$replay"; then
   postgres -f /docker-entrypoint-initdb.d/010_schema.sql -f /docker-entrypoint-initdb.d/020_seed.sql
-  clickhouse --queries-file /docker-entrypoint-initdb.d/010_landing.sql
-  clickhouse --queries-file /docker-entrypoint-initdb.d/020_seed.sql
+  clickhouse --queries-file /quickbite-init/010_landing.sql
+  clickhouse --queries-file /quickbite-init/020_seed.sql
   smoke
 fi
