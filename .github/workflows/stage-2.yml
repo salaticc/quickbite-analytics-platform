@@ -1,0 +1,36 @@
+name: Stage 2 infrastructure
+
+on:
+  pull_request:
+    branches: [develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  databases:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Compose and shell
+        run: |
+          docker compose config --quiet
+          bash -n tests/smoke.sh
+      - name: Start PostgreSQL and ClickHouse
+        run: docker compose up -d --wait --wait-timeout 180
+      - name: Check SQL, constraints and seed replay
+        run: |
+          docker compose ps
+          bash tests/smoke.sh --replay
+      - name: Recreate containers with the same volumes
+        run: |
+          docker compose up -d --force-recreate --wait --wait-timeout 180
+          bash tests/smoke.sh
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs --no-color --tail=100
+      - name: Remove isolated CI containers and volumes
+        if: always()
+        run: docker compose down --volumes

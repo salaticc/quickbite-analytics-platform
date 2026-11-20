@@ -1,0 +1,61 @@
+name: quickbite
+services:
+  postgres:
+    image: postgres:18.1
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-quickbite}
+      POSTGRES_USER: ${POSTGRES_USER:-quickbite}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-quickbite-dev-postgres}
+      TZ: UTC
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-55432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./infra/postgres:/docker-entrypoint-initdb.d:ro
+      - ./tests/postgres.sql:/quickbite-tests/smoke.sql:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          PGPASSWORD="$${POSTGRES_PASSWORD}" psql -h 127.0.0.1
+          -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}" -X -Atqc 'SELECT 1' > /dev/null
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:26.8.41.14
+    environment:
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB:-quickbite}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-quickbite}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-quickbite-dev-clickhouse}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+      TZ: UTC
+    ports:
+      - "127.0.0.1:${CLICKHOUSE_HTTP_PORT:-58123}:8123"
+      - "127.0.0.1:${CLICKHOUSE_NATIVE_PORT:-59000}:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./infra/clickhouse:/quickbite-init:ro
+      - ./infra/clickhouse/010_bootstrap.sh:/docker-entrypoint-initdb.d/010_bootstrap.sh:ro
+      - ./tests/clickhouse.sql:/quickbite-tests/smoke.sql:ro
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          clickhouse-client --host "$${HOSTNAME}" --user "$${CLICKHOUSE_USER}"
+          --password "$${CLICKHOUSE_PASSWORD}" --database "$${CLICKHOUSE_DB}"
+          --query 'SELECT 1 FROM product_events LIMIT 0' > /dev/null
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+volumes:
+  postgres_data:
+  clickhouse_data:
