@@ -11,7 +11,7 @@ docker compose up -d --wait --wait-timeout 180
 docker compose ps
 ```
 
-Ожидаемый статус обоих сервисов — `healthy`. Инициализация на пустых named volumes применяет DDL и загружает seed через `/docker-entrypoint-initdb.d`. PostgreSQL хранит восемь транзакционных таблиц. ClickHouse создаёт восемь пустых landing-таблиц `pg_*` и загружает шесть продуктовых событий в `product_events`. Перенос данных из PostgreSQL и dbt запланированы на следующий этап.
+Ожидаемый статус обоих сервисов — `healthy`. Инициализация на пустых named volumes применяет DDL и загружает seed через `/docker-entrypoint-initdb.d`. PostgreSQL хранит восемь транзакционных таблиц. ClickHouse создаёт восемь пустых landing-таблиц `pg_*` и загружает шесть продуктовых событий в `product_events`. Генератор, перенос данных из PostgreSQL и проверка снимка описаны в [Stage 3](docs/stage-3.md).
 
 | Сервис | Адрес на машине | Протокол |
 | --- | --- | --- |
